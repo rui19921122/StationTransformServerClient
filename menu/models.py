@@ -1,21 +1,24 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 
 
 # Create your models here.
 
 class Menu(models.Model):
     """
-    目录
+    目录，权限控制颗粒化到具体菜单
     """
     name = models.CharField(max_length=50,
                             verbose_name='目录名称'
                             )
-    create_time = models.DateTimeField(auto_created=True,
-                                       verbose_name='创建时间'
+    create_time = models.DateTimeField(verbose_name='创建时间',
+                                       auto_now_add=True
                                        )
-    create_name = models.ForeignKey(User,
-                                    verbose_name='创建人')
+    owner = models.ForeignKey(User,
+                              verbose_name='拥有人',
+                              related_name='owner_menus',
+                              )
     parent = models.ForeignKey('self',
                                verbose_name='父项名称',
                                null=True,
@@ -24,6 +27,11 @@ class Menu(models.Model):
     enabled = models.BooleanField(default=True,
                                   verbose_name='启用标记'
                                   )
+    administrators = models.ManyToManyField(User,
+                                            verbose_name='管理员',
+                                            blank=True,
+                                            related_name='managed_menus'
+                                            )
 
     def __str__(self):
         return self.name
@@ -47,7 +55,16 @@ class Menu(models.Model):
         :return: 父项，如无父项则引发ObjectNotFound错误
         :rtype: Menu
         """
-        return self.parent
+        parent = self.parent
+        if parent:
+            return parent
+        else:
+            raise ObjectDoesNotExist("未发现父项")
 
     def get_children(self):
-        pass
+        """
+        返回下一层子项,以列表形式
+        :return: 子项
+        :rtype: Menu[]
+        """
+        return Menu.objects.filter(parent=self)
