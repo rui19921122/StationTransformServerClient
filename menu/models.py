@@ -1,9 +1,31 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+import json
 
 
 # Create your models here.
+
+class MenuPickle(models.Model):
+    json = models.TextField(verbose_name='字符数据')
+    update_date = models.DateTimeField(auto_now_add=True)
+
+    @staticmethod
+    def update_menu_json(obj: []):
+        if not isinstance(obj, list):
+            raise ValueError("{}不是list".format(obj))
+        _json = json.JSONEncoder().encode(obj)
+        print(_json)
+        MenuPickle.objects.create(json=_json)
+
+    @staticmethod
+    def get_menu():
+        _json = MenuPickle.objects.last()
+        if _json:
+            return json.JSONDecoder().decode(_json.json)
+        else:
+            return []
+
 
 class Menu(models.Model):
     """
@@ -68,3 +90,34 @@ class Menu(models.Model):
         :rtype: Menu[]
         """
         return Menu.objects.filter(parent=self)
+
+    def save(self, *args, **kwargs):
+        def get_element_by_id(id, obj):
+            pass
+
+        super(Menu, self).save(*args, **kwargs)
+        menu_obj = MenuPickle.get_menu()
+        if self.parent:
+            parent = self.parent
+            _list = [parent.id]
+            while parent.parent:  # 如果父目录仍有父目录，则继续向上嵌套
+                _list.append(parent.parent_id)
+                parent = parent.parent
+            _find_list = menu_obj
+            for id in _list:
+                for i in _find_list:
+                    if i.get('id') == id:
+                        _find_list = i.get('children')
+                        break
+            _find_list.append({
+                'id': self.id,
+                'children': []
+            })
+            MenuPickle.update_menu_json(menu_obj)
+
+
+        else:
+            menu_obj.append({'id': self.id,
+                             'children': []
+                             })
+            MenuPickle.update_menu_json(menu_obj)

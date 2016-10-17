@@ -138,3 +138,5 @@ fabric.properties
 .idea/
 StationTransformServerClient/__pycache__/
 db.sqlite3
+
+config.py
