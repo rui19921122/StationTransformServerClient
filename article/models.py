@@ -1,8 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import User
-
+from django.core.exceptions import ObjectDoesNotExist
 
 # Create your models here.
+from menu.models import Menu
+
 
 class Article(models.Model):
     name = models.CharField(verbose_name='文章名称', max_length=50)
@@ -12,9 +14,13 @@ class Article(models.Model):
     content = models.TextField(verbose_name='内容')
     files = models.ManyToManyField('article.File',
                                    related_name='created_articles',
-                                   verbose_name='附件')
+                                   verbose_name='附件',
+                                   )
     menu = models.ForeignKey('menu.Menu',
-                             verbose_name='目录')
+                             verbose_name='目录',
+                             null=True,
+                             on_delete=models.SET_NULL
+                             )
 
     class Meta:
         verbose_name = '文章'

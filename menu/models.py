@@ -1,7 +1,17 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from collections import defaultdict
 import json
+
+
+def get_item_by_id_from_list(_id, _list):
+    if _list:
+        for i in _list:
+            if i.get('id') == _id:
+                return i
+    _list.append({'id': _id, 'children': []})
+    return _list[-1]
 
 
 # Create your models here.
@@ -10,13 +20,26 @@ class MenuPickle(models.Model):
     json = models.TextField(verbose_name='字符数据')
     update_date = models.DateTimeField(auto_now_add=True)
 
-    @staticmethod
-    def update_menu_json(obj: []):
-        if not isinstance(obj, list):
-            raise ValueError("{}不是list".format(obj))
-        _json = json.JSONEncoder().encode(obj)
-        print(_json)
-        MenuPickle.objects.create(json=_json)
+    @classmethod
+    def update_menu_json(cls):
+        obj = []
+        not_root_menus = Menu.objects.filter(parent__isnull=False)
+        root_menus = Menu.objects.filter( parent__isnull=True)
+        for root_menu in root_menus:
+            obj.append({'id': root_menu.id, 'children': []})
+        for not_root_menu in not_root_menus:
+            _path = []  # 子节点与父节点的遍历索引
+            _target = not_root_menu
+            while _target.parent:
+                _target = _target.parent
+                _path.append(_target.id)
+            _target_object = obj
+            for i in reversed(_path):
+                _target_object = get_item_by_id_from_list(i, _target_object)['children']
+            _target_object.append({'id': not_root_menu.id, 'children': []})
+        cls.objects.create(
+            json=json.JSONEncoder().encode(obj)
+        )
 
     @staticmethod
     def get_menu():
@@ -32,7 +55,8 @@ class Menu(models.Model):
     目录，权限控制颗粒化到具体菜单
     """
     name = models.CharField(max_length=50,
-                            verbose_name='目录名称'
+                            verbose_name='目录名称',
+                            unique=True
                             )
     create_time = models.DateTimeField(verbose_name='创建时间',
                                        auto_now_add=True
@@ -46,9 +70,6 @@ class Menu(models.Model):
                                null=True,
                                blank=True
                                )
-    enabled = models.BooleanField(default=True,
-                                  verbose_name='启用标记'
-                                  )
     administrators = models.ManyToManyField(User,
                                             verbose_name='管理员',
                                             blank=True,
@@ -61,15 +82,7 @@ class Menu(models.Model):
     class Meta:
         verbose_name = '目录'
         verbose_name_plural = '目录列表'
-
-    @staticmethod
-    def get_all_menu_tree():
-        """
-        获取目录树
-        :return:
-        """
-        # todo 完善获取目录树方法
-        pass
+        ordering = ['create_time']
 
     def get_parent(self):
         """
@@ -92,32 +105,6 @@ class Menu(models.Model):
         return Menu.objects.filter(parent=self)
 
     def save(self, *args, **kwargs):
-        def get_element_by_id(id, obj):
-            pass
 
         super(Menu, self).save(*args, **kwargs)
-        menu_obj = MenuPickle.get_menu()
-        if self.parent:
-            parent = self.parent
-            _list = [parent.id]
-            while parent.parent:  # 如果父目录仍有父目录，则继续向上嵌套
-                _list.append(parent.parent_id)
-                parent = parent.parent
-            _find_list = menu_obj
-            for id in _list:
-                for i in _find_list:
-                    if i.get('id') == id:
-                        _find_list = i.get('children')
-                        break
-            _find_list.append({
-                'id': self.id,
-                'children': []
-            })
-            MenuPickle.update_menu_json(menu_obj)
-
-
-        else:
-            menu_obj.append({'id': self.id,
-                             'children': []
-                             })
-            MenuPickle.update_menu_json(menu_obj)
+        MenuPickle.update_menu_json()
