@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render, get_object_or_404
+from django.http.request import HttpRequest
 from rest_framework import generics, response
 from rest_framework import status
 from rest_framework.response import Response
@@ -27,12 +28,19 @@ class ListMenu(generics.ListCreateAPIView):
 
     def list(self, request, *args, **kwargs):
         """
-        :type request: django.http.request.HttpRequest
         """
         menus = Menu.objects.all()
+        managed = Menu.objects.filter(owner_id=request.user.pk)
+        # todo 将managed放置在其他视图里或补充完整
+        _ = []
+        if managed:
+            for i in managed:
+                _.append(i.pk)
+
         return Response(data={
             'items': MenuSer(menus, many=True, context={'request': request}).data,
             'sort': MenuPickle.get_menu(),
+            'managed': _
         })
 
     def post(self, request, *args, **kwargs):
@@ -40,7 +48,7 @@ class ListMenu(generics.ListCreateAPIView):
         :type request: Request
         :return:
         """
-        new = MenuSer(data=request.data,context={'request':request})
+        new = MenuSer(data=request.data, context={'request': request})
         if new.is_valid():
             new.save(owner_id=request.user.pk)
             return Response(data=new.data, status=status.HTTP_201_CREATED)
@@ -100,7 +108,7 @@ class MenuChildren(generics.ListCreateAPIView):
             owner=request.user,
             parent=parent
         )
-        return Response(data=MenuSer(new).data,
+        return Response(data=MenuSer(new, context={'request': request}).data,
                         status=status.HTTP_201_CREATED
                         )
 

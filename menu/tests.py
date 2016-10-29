@@ -1,5 +1,6 @@
 from rest_framework import status
 from rest_framework.test import APITestCase
+from rest_framework.request import Request
 
 from article.models import Article
 from .models import Menu, MenuPickle
