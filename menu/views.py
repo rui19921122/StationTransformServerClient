@@ -31,8 +31,8 @@ class ListMenu(generics.ListCreateAPIView):
         """
         menus = Menu.objects.all()
         return Response(data={
-            'items': MenuSer(menus, many=True).data,
-            'sort': MenuPickle.get_menu()
+            'items': MenuSer(menus, many=True, context={'request': request}).data,
+            'sort': MenuPickle.get_menu(),
         })
 
     def post(self, request, *args, **kwargs):
@@ -40,7 +40,7 @@ class ListMenu(generics.ListCreateAPIView):
         :type request: Request
         :return:
         """
-        new = MenuSer(data=request.data)
+        new = MenuSer(data=request.data,context={'request':request})
         if new.is_valid():
             new.save(owner_id=request.user.pk)
             return Response(data=new.data, status=status.HTTP_201_CREATED)
