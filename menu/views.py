@@ -15,6 +15,7 @@ from django.http.response import Http404
 from .serializations import MenuSer, AddChildSer, MenuAdministratorSer
 from article.serializations import ArticleSer
 import permissions as custom_permissions
+from article.models import Article
 
 
 # Create your views here.
@@ -72,7 +73,6 @@ class MenuDetail(generics.RetrieveUpdateDestroyAPIView):
         obj = get_object_or_404(queryset, **_filter)
         self.check_object_permissions(self.request, obj)
         return obj
-
 
 
 class MenuChildren(generics.ListCreateAPIView):
@@ -223,3 +223,9 @@ class MenuArticlesList(generics.ListCreateAPIView):
                 menu_id=obj.pk
             )
             return Response(data=data.data, status=status.HTTP_201_CREATED)
+
+
+class ListArticles(generics.ListAPIView):
+    permission_classes = []
+    queryset = Article.objects.all()
+    serializer_class = ArticleSer

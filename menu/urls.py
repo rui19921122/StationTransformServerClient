@@ -5,6 +5,8 @@ from . import views
 urlpatterns = [
     url(r'^$', views.ListMenu.as_view(),
         name='menu-list'),
+    url(r'^articles/$', views.ListArticles.as_view(),
+        name='menu-list'),
     url(r'^(?P<pk>\d{1,3})/$', views.MenuDetail.as_view(),
         name='menu-detail'),
     url(r'^(?P<pk>\d{1,3})/children/$',
