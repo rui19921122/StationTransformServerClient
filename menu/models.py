@@ -56,7 +56,6 @@ class Menu(models.Model):
     """
     name = models.CharField(max_length=50,
                             verbose_name='目录名称',
-                            unique=True
                             )
     create_time = models.DateTimeField(verbose_name='创建时间',
                                        auto_now_add=True
@@ -83,6 +82,7 @@ class Menu(models.Model):
         verbose_name = '目录'
         verbose_name_plural = '目录列表'
         ordering = ['create_time']
+        unique_together = ['parent','name']
 
     def get_parent(self):
         """
