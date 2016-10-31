@@ -40,7 +40,8 @@ class ListMenu(generics.ListCreateAPIView):
         return Response(data={
             'items': MenuSer(menus, many=True, context={'request': request}).data,
             'sort': MenuPickle.get_menu(),
-            'managed': _
+            'managed': _,
+            'root_managed': request.user.is_superuser
         })
 
     def post(self, request, *args, **kwargs):
@@ -71,6 +72,7 @@ class MenuDetail(generics.RetrieveUpdateDestroyAPIView):
         obj = get_object_or_404(queryset, **_filter)
         self.check_object_permissions(self.request, obj)
         return obj
+
 
 
 class MenuChildren(generics.ListCreateAPIView):

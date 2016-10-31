@@ -24,7 +24,7 @@ class MenuPickle(models.Model):
     def update_menu_json(cls):
         obj = []
         not_root_menus = Menu.objects.filter(parent__isnull=False)
-        root_menus = Menu.objects.filter( parent__isnull=True)
+        root_menus = Menu.objects.filter(parent__isnull=True)
         for root_menu in root_menus:
             obj.append({'id': root_menu.id, 'children': []})
         for not_root_menu in not_root_menus:
@@ -82,7 +82,6 @@ class Menu(models.Model):
         verbose_name = '目录'
         verbose_name_plural = '目录列表'
         ordering = ['create_time']
-        unique_together = ['parent','name']
 
     def get_parent(self):
         """
@@ -107,4 +106,8 @@ class Menu(models.Model):
     def save(self, *args, **kwargs):
 
         super(Menu, self).save(*args, **kwargs)
+        MenuPickle.update_menu_json()
+
+    def delete(self, using=None, keep_parents=False):
+        super(Menu, self).delete(using, keep_parents)
         MenuPickle.update_menu_json()
