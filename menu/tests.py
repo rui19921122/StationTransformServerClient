@@ -61,7 +61,7 @@ class TestGetMenus(APITestCase):
         url = reverse('menu-list')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data.get('items')), 7)
+        self.assertEqual(len(response.data.get('items')), 7,response.data)
         self.assertListEqual(response.data.get('sort'),
                              [
                                  {'id': Menu.objects.get(name='测试目录').id, 'children': [

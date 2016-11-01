@@ -1,3 +1,4 @@
+import datetime
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render, get_object_or_404
@@ -190,15 +191,29 @@ class MenuArticlesList(generics.ListCreateAPIView):
     serializer_class = ArticleSer
 
     def get_queryset(self):
-        """
-        :return:
-        """
         try:
             obj = Menu.objects.get(pk=int(self.kwargs.get('pk')))
             self.check_object_permissions(self.request, obj)
         except ObjectDoesNotExist:
             raise Http404
-        return obj.article_set
+        _ = Article.objects.all()
+        search = self.request.query_params.get('search', '')
+        start = self.request.query_params.get('start')
+        if start:
+            year, month, day = start.split('-')
+            start = datetime.date(int(year), int(month), int(day))
+        else:
+            start = datetime.date.today() - datetime.timedelta(days=7)
+        end = self.request.query_params.get('end')
+        if end:
+            year, month, day = end.split('-')
+            end = datetime.date(int(year), int(month), int(day)) + datetime.timedelta(days=1)
+        else:
+            end = datetime.date.today() + datetime.timedelta(days=1)
+        return obj.article_set.filter(name__contains=search,
+                                      create_time__gte=start,
+                                      create_time__lte=end
+                                      )
 
     def get_object(self):
         """
@@ -227,5 +242,25 @@ class MenuArticlesList(generics.ListCreateAPIView):
 
 class ListArticles(generics.ListAPIView):
     permission_classes = []
-    queryset = Article.objects.all()
     serializer_class = ArticleSer
+
+    def get_queryset(self):
+        _ = Article.objects.all()
+        search = self.request.query_params.get('search', '')
+        start = self.request.query_params.get('start')
+        if start:
+            year, month, day = start.split('-')
+            start = datetime.date(int(year), int(month), int(day))
+        else:
+            start = datetime.date.today() - datetime.timedelta(days=7)
+        end = self.request.query_params.get('end')
+        if end:
+            year, month, day = end.split('-')
+            end = datetime.date(int(year), int(month), int(day)) + datetime.timedelta(days=1)
+        else:
+            end = datetime.date.today() + datetime.timedelta(days=1)
+        return _.filter(
+            name__contains=search,
+            create_time__lte=end,
+            create_time__gte=start
+        )
