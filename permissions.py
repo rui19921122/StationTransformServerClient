@@ -59,4 +59,9 @@ class OnlyOwnerCanOperate(BasePermission):
     message = "只有管理员可以管理目录管理员"
 
     def has_object_permission(self, request, view, obj):
-        return request.user == obj.owner
+        if hasattr(obj, 'owner'):
+            return request.user == obj.owner
+        elif hasattr(obj, 'create_person'):
+            return request.user == obj.create_person
+        else:
+            raise AttributeError

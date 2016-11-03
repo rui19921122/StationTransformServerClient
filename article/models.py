@@ -11,7 +11,7 @@ class Article(models.Model):
     create_person = models.ForeignKey(User,
                                       verbose_name='创建人')
     create_time = models.DateTimeField(auto_now_add=True)
-    content = models.TextField(verbose_name='内容')
+    content = models.TextField(verbose_name='内容',null=True,blank=True)
     files = models.ManyToManyField('article.File',
                                    related_name='created_articles',
                                    verbose_name='附件',
