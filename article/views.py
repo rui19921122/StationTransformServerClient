@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework import generics, status
 
-from article.models import Article
+from article.models import Article, File
 from .serializations import ArticleSer
 import permissions as custom_permissions
 
@@ -42,3 +42,14 @@ class ArticleEditPermission(generics.RetrieveUpdateDestroyAPIView):
                                 filter(pk=self.kwargs.get('pk')))
         self.check_object_permissions(self.request, obj)
         return obj
+
+
+class DeleteArticleFile(generics.DestroyAPIView):
+    permission_classes = [
+        custom_permissions.OnlyOwnerCanOperate
+    ]
+    queryset = File.objects.all()
+
+
+def upload_file(request, pk):
+    print(request.FILES[0])
