@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 
 
 class FileSer(serializers.ModelSerializer):
+
     class Meta:
         model = File
         fields = '__all__'
@@ -41,4 +42,3 @@ class ArticleSer(serializers.HyperlinkedModelSerializer):
             menu_id=validated_data['menu_id'],
             name=validated_data['name']
         )
-

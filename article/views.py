@@ -1,8 +1,11 @@
+from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404
 from rest_framework import generics, status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 from article.models import Article, File
-from .serializations import ArticleSer
+from .serializations import ArticleSer, FileSer
 import permissions as custom_permissions
 
 
@@ -51,5 +54,24 @@ class DeleteArticleFile(generics.DestroyAPIView):
     queryset = File.objects.all()
 
 
+@api_view(['POST','GET'])
 def upload_file(request, pk):
-    print(request.FILES[0])
+    if request.method == 'GET':
+        article = Article.objects.get(pk=pk)
+        ser = FileSer(article.files,many=True)
+        return Response(data=ser.data)
+    if request.method == 'POST':
+        if not request.user.is_authenticated():
+            return HttpResponse(status=status.HTTP_403_FORBIDDEN)
+        user = request.user
+        article = Article.objects.get(pk=pk)
+        if not article.create_person == user:
+            return HttpResponse(status=status.HTTP_403_FORBIDDEN)
+        article.files.add(
+            File.objects.create(
+                file=request.FILES['file'],
+                name=request.FILES['file'].name,
+                create_person=request.user
+            )
+        )
+        return HttpResponse(status=status.HTTP_201_CREATED)
