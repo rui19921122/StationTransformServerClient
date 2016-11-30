@@ -9,5 +9,5 @@ class DisableCSRFCheck(MiddlewareMixin):
 
 class SleepFiveSeconds(MiddlewareMixin):
     def process_request(self, request):
-        # pass
-        time.sleep(3)
+        pass
+        # time.sleep(3)
